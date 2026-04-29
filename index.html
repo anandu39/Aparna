@@ -1022,8 +1022,8 @@ function releaseBalloons(){
 // ═══════════════════════════════════════
 //  PAGE 6: CAKE
 // ═══════════════════════════════════════
-function lightCandle(){
-  if(candleLit) return; 
+function lightCandle() {
+  if (candleLit) return;
   candleLit = true;
 
   const flame = document.getElementById('flameGroup');
@@ -1032,58 +1032,128 @@ function lightCandle(){
   const cutBtn = document.getElementById('cutCakeBtn');
   const glowRing = document.getElementById('cakeGlowRing');
 
-  // Show flame
   flame.style.display = 'block';
 
-  // Glow effect
-  glowRing.setAttribute('fill','rgba(245,200,66,0.08)');
-  glowRing.setAttribute('r','95');
+  // Glow pulse stronger
+  glowRing.setAttribute('fill', 'rgba(245,200,66,0.15)');
+  glowRing.setAttribute('r', '100');
 
-  // Show wish text
-  setTimeout(()=>{
-    wish.classList.add('show');
-  },400);
+  // Wish text
+  setTimeout(() => wish.classList.add('show'), 300);
 
-  // Disable candle button
+  // Hide button
   btn.style.display = 'none';
 
-  // IMPORTANT: show next button faster + clearly
-  setTimeout(()=>{
-    cutBtn.style.display = 'inline-flex';
-    cutBtn.style.opacity = '0';
-    cutBtn.style.transform = 'translateY(20px) scale(0.95)';
-    
-    requestAnimationFrame(()=>{
-      cutBtn.style.transition = 'all 0.6s ease';
-      cutBtn.style.opacity = '1';
-      cutBtn.style.transform = 'translateY(0) scale(1)';
-    });
+  // Ambient sound
+  playAmbient();
 
-    spawnParticles(120,'burst');
-  },1200); // faster timing
+  // Enable mic blow detection
+  enableBlowDetection();
 
-  // Cake glow
-  const svg=document.getElementById('cakeSvg');
-  svg.style.filter='drop-shadow(0 0 35px rgba(245,200,66,0.7))';
+  // Show next button (hidden until blow)
+  cutBtn.style.display = 'none';
+
+  spawnParticles(120, 'burst');
 }
 
-function cutCakeAndNext(){
-  const cake = document.getElementById('cakeWrap');
+function enableBlowDetection() {
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const mic = audioCtx.createMediaStreamSource(stream);
+    const analyser = audioCtx.createAnalyser();
 
-  // Slice animation feel
-  cake.style.transition = 'transform 0.8s cubic-bezier(0.34,1.56,0.64,1)';
-  cake.style.transform = 'scale(0.92) rotateX(10deg)';
+    mic.connect(analyser);
+    analyser.fftSize = 256;
 
-  spawnParticles(200,'burst');
+    const data = new Uint8Array(analyser.frequencyBinCount);
 
-  setTimeout(()=>{
-    cake.style.transform = 'scale(0.85) rotateX(18deg)';
-  },300);
+    function detect() {
+      analyser.getByteFrequencyData(data);
+      let volume = data.reduce((a, b) => a + b) / data.length;
 
-  // Smooth transition to message
-  setTimeout(()=>{
+      if (volume > 35) {
+        blowOutCandle();
+        return;
+      }
+      requestAnimationFrame(detect);
+    }
+
+    detect();
+  }).catch(() => {
+    // fallback if mic denied
+    document.getElementById('cutCakeBtn').style.display = 'inline-flex';
+  });
+}
+
+function blowOutCandle() {
+  const flame = document.getElementById('flameGroup');
+  const cutBtn = document.getElementById('cutCakeBtn');
+
+  flame.style.display = 'none';
+
+  spawnParticles(200, 'burst');
+
+  // Show next button
+  cutBtn.style.display = 'inline-flex';
+  cutBtn.style.opacity = '0';
+
+  setTimeout(() => {
+    cutBtn.style.transition = 'all 0.6s ease';
+    cutBtn.style.opacity = '1';
+    cutBtn.style.transform = 'translateY(0)';
+  }, 200);
+}
+
+function cutCakeAndNext() {
+  const cake = document.getElementById('cakeSvg');
+
+  // Slice effect
+  cake.style.transition = 'transform 1s ease';
+  cake.style.transform = 'scale(0.9) rotateX(15deg)';
+
+  spawnParticles(250, 'burst');
+
+  // Dramatic pause
+  setTimeout(() => {
     nextPage();
-  },1200);
+    startTypingMessage();
+  }, 1200);
+}
+
+function startTypingMessage() {
+  const paragraphs = document.querySelectorAll('.msg-body p');
+
+  paragraphs.forEach(p => {
+    const text = p.innerHTML;
+    p.innerHTML = '';
+    let i = 0;
+
+    function type() {
+      if (i < text.length) {
+        p.innerHTML += text.charAt(i);
+        i++;
+        setTimeout(type, 12);
+      }
+    }
+
+    setTimeout(type, Math.random() * 400);
+  });
+}
+
+function playAmbient() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.type = 'sine';
+  osc.frequency.value = 60;
+
+  gain.gain.value = 0.02;
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start();
 }
 
 // init page
