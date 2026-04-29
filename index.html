@@ -425,6 +425,26 @@ html, body {
   transition: width 0.6s var(--ease); width: 0%;
 }
 
+#cakeLeft, #cakeRight {
+  transition: transform 0.9s cubic-bezier(0.22,1,0.36,1);
+}
+
+.cake-cut #cakeLeft {
+  transform: translateX(-40px) rotate(-6deg);
+}
+
+.cake-cut #cakeRight {
+  transform: translateX(40px) rotate(6deg);
+}
+
+#cakeSvg {
+  animation: cakeGlow 2.5s ease-in-out infinite alternate;
+}
+
+@keyframes cakeGlow {
+  from { filter: drop-shadow(0 0 10px rgba(245,200,66,0.2)); }
+  to { filter: drop-shadow(0 0 30px rgba(245,200,66,0.6)); }
+}
 /* ────── PAGE COUNTER ────── */
 .page-counter {
   position: fixed; bottom: 1.8rem; left: 50%;
@@ -447,7 +467,6 @@ html, body {
 <canvas id="bg-canvas"></canvas>
 <canvas id="particle-canvas"></canvas>
 <div id="progress"></div>
-<div class="page-counter" id="pageCounter">01 / 07</div>
 
 <!-- ═══ NAV DOTS ═══ -->
 <nav class="nav-dots" id="navDots" aria-label="Navigation"></nav>
@@ -653,15 +672,25 @@ html, body {
   <div class="msg-card">
     <div class="msg-opener">" For Aparna "</div>
     <div class="msg-body">
-      <p><strong>Happy Birthday, Aparna.</strong> Not the kind of wish you say just because it's the date — but the kind that comes from truly meaning it, from really knowing you.</p>
-      <p>You are one of those rare, genuine people. You've never judged, never made anyone feel small — you've just been there, steady and kind. <em>That means more than you'll ever know.</em></p>
-      <p>Life hasn't always been easy. You've carried things no one should have to carry, faced seasons harder than fair. And yet — <strong>here you are.</strong> Still standing. Still you. That's not luck. That's extraordinary.</p>
-      <p>This year, I wish you <strong>travel</strong> — new cities, unplanned roads, sunsets from places you've never been. Go explore, because the world has corners made exactly for people like you.</p>
-      <p>I wish you <strong>happiness that starts from within.</strong> Be proud of yourself — not because life is perfect, but because <em>you</em> are. Don't let old wounds or unkind words dim that light.</p>
-      <p><strong>Don't let anything stop you</strong> from becoming everything you're meant to be. You deserve a life as warm as you make others feel.</p>
-      <p>And from the bottom of my heart — <em>thank you</em> for being a friend. For the conversations, the trust, the moments. You've made my world better just by being in it. <strong>That's everything.</strong></p>
-      <p style="color:rgba(255,255,255,0.88)">So here's to you, Aparna — to this year and every one after. May every morning feel like possibility. May you laugh more than you cry. May you find every place your heart has been quietly dreaming of. And may you always, always know your own worth. 🌸</p>
-    </div>
+
+      <p><strong>Happy Birthday, Aparna.</strong></p>
+
+      <p>
+      You’re one of those rare people who makes everything feel lighter just by being there.
+      Even when life hasn’t been easy, you’ve stayed strong in a way not many can.
+      </p>
+
+      <p>
+      I hope this year brings you peace, happiness, and moments that remind you how special you are.
+      </p>
+
+      <p><strong>You deserve all of it. Always.</strong></p>
+
+      <p style="margin-top:20px;">
+      With love — Your friend ✦
+      </p>
+
+      </div>
     <div class="msg-sig">With love, always — Your friend ✦</div>
   </div>
 </div>
@@ -1107,37 +1136,34 @@ function blowOutCandle() {
 function cutCakeAndNext() {
   const cake = document.getElementById('cakeSvg');
 
-  // Slice effect
-  cake.style.transition = 'transform 1s ease';
-  cake.style.transform = 'scale(0.9) rotateX(15deg)';
+  cake.classList.add('cake-cut');
 
-  spawnParticles(250, 'burst');
+  spawnParticles(220, 'burst');
 
-  // Dramatic pause
+  // subtle cinematic pause
   setTimeout(() => {
     nextPage();
     startTypingMessage();
-  }, 1200);
+  }, 1100);
 }
 
 function startTypingMessage() {
-  const paragraphs = document.querySelectorAll('.msg-body p');
+  const container = document.querySelector('.msg-body');
+  const original = container.innerHTML;
 
-  paragraphs.forEach(p => {
-    const text = p.innerHTML;
-    p.innerHTML = '';
-    let i = 0;
+  container.innerHTML = '';
 
-    function type() {
-      if (i < text.length) {
-        p.innerHTML += text.charAt(i);
-        i++;
-        setTimeout(type, 12);
-      }
+  let i = 0;
+
+  function type() {
+    if (i < original.length) {
+      container.innerHTML = original.slice(0, i + 1);
+      i++;
+      setTimeout(type, 8);
     }
+  }
 
-    setTimeout(type, Math.random() * 400);
-  });
+  type();
 }
 
 function playAmbient() {
